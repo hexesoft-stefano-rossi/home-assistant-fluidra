@@ -1,0 +1,130 @@
+name: "Hexesoft Fluidra"
+description: "Bridge Fluidra/AstralPool (Modbus TCP) in Home Assistant"
+version: "1.0.0"
+slug: "hexesoft_fluidra"
+arch:
+  - aarch64
+  - amd64
+host_network: true
+startup: application
+boot: auto
+
+options:
+  modbus:
+    host: ""
+    port: 502
+    timeout_ms: 3000
+
+  mqtt:
+    host: "core-mosquitto"
+    port: 1883
+    username: ""
+    password: ""
+    base_topic: "pool_bridge"
+    discovery_prefix: "homeassistant"
+
+  poll_settings:
+    interval_seconds: 30
+    full_bus_scan: false
+    scan_from: 1
+    scan_to: 60
+
+  system_settings:
+    log_level: "info"
+
+  heat_pumps: []
+  valves: []
+  gpios: []
+  lights: []
+  generics: []
+
+schema:
+
+  modbus:
+    host: str
+    port: int
+    timeout_ms: int(500,60000)
+
+  mqtt:
+    host: str
+    port: int
+    username: str?
+    password: password?
+    base_topic: str
+    discovery_prefix: str
+
+  poll_settings:
+    interval_seconds: int(10,3600)  # non scendere sotto 10 con molti dispositivi
+    full_bus_scan: bool
+    scan_from: int(1,247)
+    scan_to: int(1,247)
+
+  system_settings:
+    log_level: list(info|debug|warning|error)
+
+  heat_pumps:
+    - name: str
+      unit_id: int(1,247)
+      enabled: bool?
+      model: str?
+      min_temp: float?
+      max_temp: float?
+      measure_registers:
+        water_in: int?
+        water_out: int?
+        ambient: int?
+        setpoint: int?
+
+  valves:
+    - name: str
+      unit_id: int(1,247)
+      enabled: bool?
+      model: str?
+      allow_drain: bool  # ATTENZIONE: se true, lo SCARICO svuota la piscina
+
+  gpios:
+    - name: str
+      unit_id: int(1,247)
+      enabled: bool?
+      model: str?
+      relays:
+        - name: str?
+          type: list(switch|light|outlet)?
+          icon: str?
+      inputs:
+        - name: str?
+          device_class: list(none|door|window|motion|smoke|moisture|opening|presence|problem|power)?
+          expose_counter: bool?
+
+  lights:
+    - name: str
+      unit_id: int(1,247)
+      enabled: bool?
+      model: str?
+      sequence_count: int(1,32)?
+      colors:
+        - key: str
+          value: int
+
+  generics:
+    - name: str
+      unit_id: int(1,247)
+      enabled: bool?
+      model: str?
+      prefix: str
+      mappings:
+        - name: str
+          area: list(holding|input|coil|discrete)
+          address: int(0,65535)
+          kind: list(sensor|binary_sensor|switch|number|select|light)
+          scale: float?
+          signed: bool?
+          unit: str?
+          device_class: str?
+          icon: str?
+          bit: int(-1,15)?
+          writable: bool?
+          min: float?
+          max: float?
+          step: float?
+          diagnostic: bool?

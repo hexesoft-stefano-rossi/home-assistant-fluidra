@@ -1,0 +1,8 @@
+# Nome dell'archivio che apparirà in Home Assistant
+name: "Hexesoft Fluidra"
+
+# URL del tuo repository GitHub
+url: "https://github.com/hexesoft-stefano-rossi/home-assistant-fluidra"
+
+# Nome del manutentore del progetto
+maintainer: "Stefano Rossi"
