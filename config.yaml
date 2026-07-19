@@ -1,6 +1,6 @@
 name: "Hexesoft Fluidra"
 description: "Bridge Fluidra/AstralPool (Modbus TCP) in Home Assistant"
-version: "1.0.0"
+version: "1.0.1"
 slug: "hexesoft_fluidra"
 arch:
   - aarch64
@@ -69,7 +69,7 @@ schema:
       model: str?
       min_temp: float?
       max_temp: float?
-      measure_registers:
+      measure_registers?:
         water_in: int?
         water_out: int?
         ambient: int?
@@ -80,18 +80,18 @@ schema:
       unit_id: int(1,247)
       enabled: bool?
       model: str?
-      allow_drain: bool  # ATTENZIONE: se true, lo SCARICO svuota la piscina
+      allow_drain: bool?  # ATTENZIONE: se true, lo SCARICO svuota la piscina
 
   gpios:
     - name: str
       unit_id: int(1,247)
       enabled: bool?
       model: str?
-      relays:
+      relays?:
         - name: str?
           type: list(switch|light|outlet)?
           icon: str?
-      inputs:
+      inputs?:
         - name: str?
           device_class: list(none|door|window|motion|smoke|moisture|opening|presence|problem|power)?
           expose_counter: bool?
@@ -102,7 +102,7 @@ schema:
       enabled: bool?
       model: str?
       sequence_count: int(1,32)?
-      colors:
+      colors?:
         - key: str
           value: int
 
@@ -112,7 +112,7 @@ schema:
       enabled: bool?
       model: str?
       prefix: str
-      mappings:
+      mappings?:
         - name: str
           area: list(holding|input|coil|discrete)
           address: int(0,65535)
