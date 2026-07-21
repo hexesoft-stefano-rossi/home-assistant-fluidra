@@ -1,6 +1,6 @@
 name: "Hexesoft Fluidra"
 description: "Bridge Fluidra/AstralPool (Modbus TCP) in Home Assistant"
-version: "1.0.1"
+version: "1.0.2"
 slug: "hexesoft_fluidra"
 arch:
   - aarch64
@@ -32,11 +32,21 @@ options:
   system_settings:
     log_level: "info"
 
-  heat_pumps: []
-  valves: []
-  gpios: []
-  lights: []
-  generics: []
+  # Ogni categoria è wrappata in `.devices` per rendere il form di HA più
+  # leggibile: la sezione ha il titolo della categoria e la lista dei device
+  # dentro (stesso stile del bridge BTicino).
+  heat_pumps:
+    devices: []
+  valves:
+    devices: []
+  gpios:
+    devices: []
+  lights:
+    devices: []
+  chlorinators:
+    devices: []
+  generics:
+    devices: []
 
 schema:
 
@@ -62,69 +72,89 @@ schema:
   system_settings:
     log_level: list(info|debug|warning|error)
 
+  # NB: HA add-on schema non permette di rendere OPZIONALE una lista/mappa annidata dentro un
+  # elemento di lista. Le sotto-liste (relays, inputs, colors, mappings, measure_registers) sono
+  # quindi dichiarate obbligatorie come chiave: quando aggiungi un dispositivo, aggiungi anche
+  # le sotto-liste (basta lasciarle VUOTE se non ti servono). Ogni campo dentro le sotto-liste
+  # è invece marcato `?` così puoi popolarle a pezzi.
+
   heat_pumps:
-    - name: str
-      unit_id: int(1,247)
-      enabled: bool?
-      model: str?
-      min_temp: float?
-      max_temp: float?
-      measure_registers?:
-        water_in: int?
-        water_out: int?
-        ambient: int?
-        setpoint: int?
+    devices:
+      - name: str
+        unit_id: int(1,247)
+        enabled: bool?
+        model: str?
+        min_temp: float?
+        max_temp: float?
+        measure_registers:
+          water_in: int?
+          water_out: int?
+          ambient: int?
+          setpoint: int?
 
   valves:
-    - name: str
-      unit_id: int(1,247)
-      enabled: bool?
-      model: str?
-      allow_drain: bool?  # ATTENZIONE: se true, lo SCARICO svuota la piscina
+    devices:
+      - name: str
+        unit_id: int(1,247)
+        enabled: bool?
+        model: str?
+        allow_drain: bool?  # ATTENZIONE: se true, lo SCARICO svuota la piscina
 
   gpios:
-    - name: str
-      unit_id: int(1,247)
-      enabled: bool?
-      model: str?
-      relays?:
-        - name: str?
-          type: list(switch|light|outlet)?
-          icon: str?
-      inputs?:
-        - name: str?
-          device_class: list(none|door|window|motion|smoke|moisture|opening|presence|problem|power)?
-          expose_counter: bool?
+    devices:
+      - name: str
+        unit_id: int(1,247)
+        enabled: bool?
+        model: str?
+        relays:
+          - name: str?
+            type: list(switch|light|outlet)?
+            icon: str?
+        inputs:
+          - name: str?
+            device_class: list(none|door|window|motion|smoke|moisture|opening|presence|problem|power)?
+            expose_counter: bool?
 
   lights:
-    - name: str
-      unit_id: int(1,247)
-      enabled: bool?
-      model: str?
-      sequence_count: int(1,32)?
-      colors?:
-        - key: str
-          value: int
+    devices:
+      - name: str
+        unit_id: int(1,247)
+        enabled: bool?
+        model: str?
+        sequence_count: int(1,32)?
+        colors:
+          - key: str
+            value: int
+
+  # Centraline chimica Energy Connect (Tecno LC2): pH, ORP, cloro, sale, temperatura, elettrolisi.
+  # Non ha sotto-liste: tutte le entità sono fisse, i registri già mappati dal driver.
+  chlorinators:
+    devices:
+      - name: str
+        unit_id: int(1,247)
+        enabled: bool?
+        model: str?
 
   generics:
-    - name: str
-      unit_id: int(1,247)
-      enabled: bool?
-      model: str?
-      prefix: str
-      mappings?:
-        - name: str
-          area: list(holding|input|coil|discrete)
-          address: int(0,65535)
-          kind: list(sensor|binary_sensor|switch|number|select|light)
-          scale: float?
-          signed: bool?
-          unit: str?
-          device_class: str?
-          icon: str?
-          bit: int(-1,15)?
-          writable: bool?
-          min: float?
-          max: float?
-          step: float?
-          diagnostic: bool?
+    devices:
+      - name: str
+        unit_id: int(1,247)
+        enabled: bool?
+        model: str?
+        prefix: str
+        mappings:
+          - name: str
+            area: list(holding|input|coil|discrete)
+            address: int(0,65535)
+            kind: list(sensor|binary_sensor|switch|number|select|light)
+            scale: float?
+            signed: bool?
+            unit: str?
+            device_class: str?
+            icon: str?
+            bit: int(-1,15)?
+            writable: bool?
+            min: float?
+            max: float?
+            step: float?
+            diagnostic: bool?
