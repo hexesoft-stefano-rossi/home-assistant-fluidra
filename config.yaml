@@ -1,6 +1,6 @@
 name: "Hexesoft Fluidra"
 description: "Bridge Fluidra/AstralPool (Modbus TCP) in Home Assistant"
-version: "1.0.2"
+version: "1.0.4"
 slug: "hexesoft_fluidra"
 arch:
   - aarch64
@@ -86,6 +86,7 @@ schema:
         model: str?
         min_temp: float?
         max_temp: float?
+        setpoint_register: int(0,65535)?
         measure_registers:
           water_in: int?
           water_out: int?
