@@ -1,6 +1,6 @@
 name: "Hexesoft Fluidra"
 description: "Bridge Fluidra/AstralPool (Modbus TCP) in Home Assistant"
-version: "1.0.4"
+version: "1.0.5"
 slug: "hexesoft_fluidra"
 arch:
   - aarch64
@@ -87,11 +87,43 @@ schema:
         min_temp: float?
         max_temp: float?
         setpoint_register: int(0,65535)?
+        setpoint_scale: int(1,100)?
+        # Sonda di ESPLORAZIONE: se true, aggiunge ~10 letture Optional a ogni giro di polling
+        # e stampa i valori raw dei registri candidati non ancora identificati nel log DEBUG.
+        # Utile quando si sospetta che un registro sconosciuto cambi durante un'operazione.
+        # Default false → zero costo in produzione.
+        enable_debug_probe: bool?
+        # Misure in HOLDING REGISTERS (FC 0x03). Chiavi supportate:
+        # water_in, water_out, ambient, gas_return, gas_exhaust, coil,
+        # comp_current, comp_freq, fan_speed, evi_step, hp_onoff_count, comp_starts_count.
         measure_registers:
           water_in: int?
           water_out: int?
           ambient: int?
-          setpoint: int?
+          gas_return: int?
+          gas_exhaust: int?
+          coil: int?
+          comp_current: int?
+          comp_freq: int?
+          fan_speed: int?
+          evi_step: int?
+          hp_onoff_count: int?
+          comp_starts_count: int?
+        # Misure in INPUT REGISTERS (FC 0x04) — stesse chiavi. Sul PROELYO le temperature
+        # acqua stanno negli IR, non negli HR.
+        measure_input_registers:
+          water_in: int?
+          water_out: int?
+          ambient: int?
+          gas_return: int?
+          gas_exhaust: int?
+          coil: int?
+          comp_current: int?
+          comp_freq: int?
+          fan_speed: int?
+          evi_step: int?
+          hp_onoff_count: int?
+          comp_starts_count: int?
 
   valves:
     devices:
