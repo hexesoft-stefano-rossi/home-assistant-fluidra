@@ -1,6 +1,6 @@
 name: "Hexesoft Fluidra"
 description: "Bridge Fluidra/AstralPool (Modbus TCP) in Home Assistant"
-version: "1.0.5"
+version: "1.0.7"
 slug: "hexesoft_fluidra"
 arch:
   - aarch64
@@ -78,95 +78,86 @@ schema:
   # le sotto-liste (basta lasciarle VUOTE se non ti servono). Ogni campo dentro le sotto-liste
   # è invece marcato `?` così puoi popolarle a pezzi.
 
+  # Pompa di calore PROELYO INVERBOOST NN / ELYO SMART B NN.
+  # Tutti i parametri tecnici (indirizzi registri, limiti temperatura, scala setpoint)
+  # sono hardcoded nel driver: derivano dal reverse engineering del protocollo Modbus
+  # e non sono conoscibili dall'utente. L'utente deve solo dire il name e l'unit_id.
   heat_pumps:
     devices:
       - name: str
         unit_id: int(1,247)
         enabled: bool?
-        model: str?
-        min_temp: float?
-        max_temp: float?
-        setpoint_register: int(0,65535)?
-        setpoint_scale: int(1,100)?
-        # Sonda di ESPLORAZIONE: se true, aggiunge ~10 letture Optional a ogni giro di polling
-        # e stampa i valori raw dei registri candidati non ancora identificati nel log DEBUG.
-        # Utile quando si sospetta che un registro sconosciuto cambi durante un'operazione.
-        # Default false → zero costo in produzione.
-        enable_debug_probe: bool?
-        # Misure in HOLDING REGISTERS (FC 0x03). Chiavi supportate:
-        # water_in, water_out, ambient, gas_return, gas_exhaust, coil,
-        # comp_current, comp_freq, fan_speed, evi_step, hp_onoff_count, comp_starts_count.
-        measure_registers:
-          water_in: int?
-          water_out: int?
-          ambient: int?
-          gas_return: int?
-          gas_exhaust: int?
-          coil: int?
-          comp_current: int?
-          comp_freq: int?
-          fan_speed: int?
-          evi_step: int?
-          hp_onoff_count: int?
-          comp_starts_count: int?
-        # Misure in INPUT REGISTERS (FC 0x04) — stesse chiavi. Sul PROELYO le temperature
-        # acqua stanno negli IR, non negli HR.
-        measure_input_registers:
-          water_in: int?
-          water_out: int?
-          ambient: int?
-          gas_return: int?
-          gas_exhaust: int?
-          coil: int?
-          comp_current: int?
-          comp_freq: int?
-          fan_speed: int?
-          evi_step: int?
-          hp_onoff_count: int?
-          comp_starts_count: int?
 
+  # Valvola selettrice SVRAC 2 / SVRAC 3 (AstralPool).
+  # Modello riconosciuto automaticamente dal SCAN. L'utente sceglie solo se abilitare
+  # il comando di SCARICO — è disattivato di default per sicurezza (svuota la piscina).
   valves:
     devices:
       - name: str
         unit_id: int(1,247)
         enabled: bool?
-        model: str?
         allow_drain: bool?  # ATTENZIONE: se true, lo SCARICO svuota la piscina
 
+  # Modulo GPIO GP4I-4O (4 relè + 4 ingressi digitali).
+  # Modello riconosciuto automaticamente. Il modulo ha SEMPRE 4 relè e 4 ingressi fisici:
+  # ognuno di essi è uno SLOT FISSO (non una lista dinamica). L'utente attiva o disattiva
+  # ciascuno col campo `enabled` e configura nome/tipo di quelli che ha cablato.
+  # Vantaggio: la corrispondenza indice→hardware è garantita e non c'è il bug HA
+  # "modifica un elemento della lista → ne aggiunge uno nuovo".
   gpios:
     devices:
       - name: str
         unit_id: int(1,247)
         enabled: bool?
-        model: str?
-        relays:
-          - name: str?
-            type: list(switch|light|outlet)?
-            icon: str?
-        inputs:
-          - name: str?
-            device_class: list(none|door|window|motion|smoke|moisture|opening|presence|problem|power)?
-            expose_counter: bool?
+        relay_1:
+          enabled: bool?
+          name: str?
+          type: list(Interruttore|Pompa|Elettrovalvola|Ventilatore|Riscaldatore|Presa elettrica|Luce|Faretti LED)?
+        relay_2:
+          enabled: bool?
+          name: str?
+          type: list(Interruttore|Pompa|Elettrovalvola|Ventilatore|Riscaldatore|Presa elettrica|Luce|Faretti LED)?
+        relay_3:
+          enabled: bool?
+          name: str?
+          type: list(Interruttore|Pompa|Elettrovalvola|Ventilatore|Riscaldatore|Presa elettrica|Luce|Faretti LED)?
+        relay_4:
+          enabled: bool?
+          name: str?
+          type: list(Interruttore|Pompa|Elettrovalvola|Ventilatore|Riscaldatore|Presa elettrica|Luce|Faretti LED)?
+        input_1:
+          enabled: bool?
+          name: str?
+          type: list(Contatto generico|Flussostato|Pressostato|Livello acqua|Movimento|Porta / finestra|Fumo|Contatore impulsi|Contatto + contatore)?
+        input_2:
+          enabled: bool?
+          name: str?
+          type: list(Contatto generico|Flussostato|Pressostato|Livello acqua|Movimento|Porta / finestra|Fumo|Contatore impulsi|Contatto + contatore)?
+        input_3:
+          enabled: bool?
+          name: str?
+          type: list(Contatto generico|Flussostato|Pressostato|Livello acqua|Movimento|Porta / finestra|Fumo|Contatore impulsi|Contatto + contatore)?
+        input_4:
+          enabled: bool?
+          name: str?
+          type: list(Contatto generico|Flussostato|Pressostato|Livello acqua|Movimento|Porta / finestra|Fumo|Contatore impulsi|Contatto + contatore)?
 
+  # Modulo luci AstralPool LumiPlus Modbus.
+  # Modello riconosciuto automaticamente. I 12 colori standard e le 8 sequenze del
+  # manuale LumiPlus sono hardcoded nel driver: l'utente non li deve dichiarare.
   lights:
     devices:
       - name: str
         unit_id: int(1,247)
         enabled: bool?
-        model: str?
-        sequence_count: int(1,32)?
-        colors:
-          - key: str
-            value: int
 
   # Centraline chimica Energy Connect (Tecno LC2): pH, ORP, cloro, sale, temperatura, elettrolisi.
-  # Non ha sotto-liste: tutte le entità sono fisse, i registri già mappati dal driver.
+  # Modello riconosciuto automaticamente. Nessun parametro utente: tutte le entità sono fisse.
   chlorinators:
     devices:
       - name: str
         unit_id: int(1,247)
         enabled: bool?
-        model: str?
 
   generics:
     devices:
