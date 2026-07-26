@@ -1,6 +1,6 @@
 name: "Hexesoft Fluidra"
 description: "Bridge Fluidra/AstralPool (Modbus TCP) in Home Assistant"
-version: "1.0.8"
+version: "1.0.9"
 slug: "hexesoft_fluidra"
 arch:
   - aarch64
@@ -82,11 +82,14 @@ schema:
   # Tutti i parametri tecnici (indirizzi registri, limiti temperatura, scala setpoint)
   # sono hardcoded nel driver: derivano dal reverse engineering del protocollo Modbus
   # e non sono conoscibili dall'utente. L'utente deve solo dire il name e l'unit_id.
+  # enable_debug_probe: se true, ogni polling legge ~60 registri extra IR/HR non identificati
+  # e li stampa nel log DEBUG. Utile per sessioni di diagnostica intensiva della PdC.
   heat_pumps:
     devices:
       - name: str
         unit_id: int(1,247)
         enabled: bool?
+        enable_debug_probe: bool?
 
   # Valvola selettrice SVRAC 2 / SVRAC 3 (AstralPool).
   # Modello riconosciuto automaticamente dal SCAN. L'utente sceglie solo se abilitare
