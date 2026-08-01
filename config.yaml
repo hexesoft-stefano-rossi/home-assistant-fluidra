@@ -1,6 +1,6 @@
 name: "Hexesoft Fluidra"
 description: "Bridge Fluidra/AstralPool (Modbus TCP) in Home Assistant"
-version: "1.1.2"
+version: "1.1.3"
 slug: "hexesoft_fluidra"
 arch:
   - aarch64
@@ -14,6 +14,7 @@ options:
     host: ""
     port: 502
     timeout_ms: 3000
+    trace_hex_dump: false
 
   mqtt:
     host: "core-mosquitto"
@@ -54,6 +55,7 @@ schema:
     host: str
     port: int
     timeout_ms: int(500,60000)
+    trace_hex_dump: bool?  # DIAGNOSTICA: stampa byte TX/RX in hex. Richiede log_level=debug.
 
   mqtt:
     host: str
@@ -99,7 +101,8 @@ schema:
       - name: str
         unit_id: int(1,247)
         enabled: bool?
-        allow_drain: bool?  # ATTENZIONE: se true, lo SCARICO svuota la piscina
+        allow_drain: bool?          # ATTENZIONE: se true, lo SCARICO svuota la piscina
+        enable_debug_probe: bool?   # DIAGNOSTICA: legge registri HR non documentati per reverse engineering
 
   # Modulo GPIO GP4I-4O (4 relè + 4 ingressi digitali).
   # Modello riconosciuto automaticamente. Il modulo ha SEMPRE 4 relè e 4 ingressi fisici:
