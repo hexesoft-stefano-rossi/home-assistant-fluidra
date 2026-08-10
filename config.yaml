@@ -1,6 +1,6 @@
 name: "Hexesoft Fluidra"
 description: "Bridge Fluidra/AstralPool (Modbus TCP) in Home Assistant"
-version: "1.1.4"
+version: "1.1.6"
 slug: "hexesoft_fluidra"
 arch:
   - aarch64
@@ -11,9 +11,9 @@ boot: auto
 
 options:
   modbus:
-    host: ""
+    host: "192.168.10.42"   # IP del gateway Waveshare (dalla sua pagina web)
     port: 502
-    timeout_ms: 3000
+    timeout_ms: 2000        # 2s: uno slave lento/assente non blocca il bus 8s a ogni intoppo (retry già presente)
     trace_hex_dump: false
 
   mqtt:
@@ -36,16 +36,49 @@ options:
   # Ogni categoria è wrappata in `.devices` per rendere il form di HA più
   # leggibile: la sezione ha il titolo della categoria e la lista dei device
   # dentro (stesso stile del bridge BTicino).
+  #
+  # ATTIVA/DISATTIVA UN DISPOSITIVO: ogni device ha il flag `enabled` (true/false).
+  # Con enabled: false il bridge lo ignora COMPLETAMENTE — niente scan, niente
+  # polling, niente scritture di avvio; al riavvio le sue entità in Home Assistant
+  # spariscono (pulizia fantasmi). Rimettendolo a true riappare tutto. È il modo
+  # per spegnere un dispositivo SENZA cancellarne la riga di configurazione.
+  #
+  # Impianto reale (agg. 2026-08-08): centralina chimica NUOVA su unit 1 (Tecno LC2).
   heat_pumps:
-    devices: []
+    devices:
+      - name: "10 Pompa di Calore"
+        unit_id: 9
+        enabled: true
+        enable_debug_probe: false   # DIAGNOSTICA: true = legge ~60 registri extra/log DEBUG
   valves:
-    devices: []
+    devices:
+      - name: "10 Valvola Selettrice"
+        unit_id: 11
+        enabled: true
+        allow_drain: false          # ATTENZIONE: true abilita lo SCARICO (svuota la piscina)
+        enable_debug_probe: false
   gpios:
-    devices: []
+    devices:
+      - name: "10 GPIO Piscina"
+        unit_id: 26
+        enabled: true
+        relay_1_enabled: true
+        relay_1_name: "10 Motore 1"
+        relay_1_type: "Pompa"
+        relay_2_enabled: true
+        relay_2_name: "10 Motore 2"
+        relay_2_type: "Pompa"
+        # relay_3/relay_4 e input_1..4 non cablati → lasciati vuoti
   lights:
-    devices: []
+    devices:
+      - name: "10 Luci Piscina"
+        unit_id: 48
+        enabled: true
   chlorinators:
-    devices: []
+    devices:
+      - name: "10 Centralina pH/Cloro"
+        unit_id: 1              # indirizzo Modbus di fabbrica della Tecno LC2 (era 2 il vecchio modello)
+        enabled: true
   generics:
     devices: []
 

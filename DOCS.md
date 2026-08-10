@@ -253,20 +253,78 @@ Ogni slot ha:
 - **SW ≥ 120**: contatori 32-bit su `IR 0x03..0x0A` (due registri per contatore,
   hi + lo). Il driver adatta il piano di lettura leggendo `Identity.SwVersion`.
 
-**Polarità dei relè**: il manuale si contraddice fra le note di `control_w0` (dice
-"0 = chiuso") e i registri di stato + esempio pratico §10.1.3 (dicono "1 = chiuso").
-Il driver segue l'**esempio pratico** (`INVERT_RELAY_LOGIC = false`, cioè `1 =
-chiuso`). Se a un primo collaudo con un carico innocuo il comportamento risulta
-invertito, ribaltare la costante.
+**Polarità dei relè**: `1 = relè CHIUSO/attivo (ON)`. **Lo decide l'hardware, non il
+manuale**: le versioni inglese e italiana del manuale si contraddicono fra loro sulla
+polarità (errore di traduzione) e, preso alla lettera, il manuale suggerirebbe persino
+`1 = aperto`. Ma sul GP4I-4O reale il comando ON → il driver scrive bit=1 → il motore
+si accende. Costante `INVERT_RELAY_LOGIC = false`. Su un modulo diverso, ri-verificare
+a banco con un carico innocuo.
 
-**Watchdog Modbus**: HR `0x10` (Watchdog_time). Se lasciato != 0, quando il bridge
-tace troppo a lungo i relè vanno al valore scritto in `HR 0x14` (wdt_relay_state).
-Il default di fabbrica è 0 (disattivato) — il bridge non forza nulla se lo trova
-già a zero. C'è comunque il pulsante `Reset allarmi` che azzera `HR 0x20`.
+---
 
-**Configurazione utente**: `name` + `unit_id` + 8 slot (`relay_1..4`, `input_1..4`)
-con `enabled`, `name`, `type`. **Nessun** indirizzo Modbus, nessuna device_class
-inglese, nessun `mdi:*` — tutto è preset in italiano.
+#### Cosa vedi in Home Assistant — guida per l'utente
+
+Il bridge **non usa mai il portale Fluidra**: tutto il modulo si configura da qui. La
+scheda del GPIO in HA è divisa in tre riquadri.
+
+##### 🔵 Controlli — l'uso di tutti i giorni
+Un interruttore per ogni relè che hai attivato (es. "Motore 1", "Motore 2"). Lo
+accendi/spegni e il relè si chiude/apre subito. **È l'unica parte che userai
+normalmente.**
+
+##### ⚙️ Configurazione — impostazioni di sicurezza (si toccano una volta e si dimenticano)
+
+- **Watchdog comunicazione** (secondi): timer di sicurezza. Se il bridge/HA smette di
+  parlare col modulo per più di questo tempo, i relè vengono messi in uno stato "di
+  sicurezza" predefinito.
+  - **`0` = disattivato → CONSIGLIATO per la piscina**: se il bridge cade, i relè
+    RESTANO come sono (la pompa di filtrazione continua a girare). È il default.
+  - Un valore > 0 (es. `60`) ha senso solo per carichi che è pericoloso lasciare accesi
+    senza controllo. Nota: sotto i 30s il modulo lo tratta comunque come 30s.
+- **Azione al watchdog**: se hai attivato il watchdog, decide DOVE vanno i relè quando
+  scatta:
+  - *Applica 'Relè al watchdog'* → usano gli switch **"— al watchdog"** qui sotto;
+  - *Applica 'Relè all'accensione'* → usano gli switch **"— all'accensione"**.
+- **… — al watchdog** (uno per relè): come deve stare quel relè SE scatta il watchdog
+  (interruttore ON = chiuso). Serve solo con il watchdog attivo.
+- **… — all'accensione** (uno per relè): come deve stare quel relè appena il modulo
+  prende corrente (ON = chiuso). Utile p.es. per far partire la filtrazione da sola
+  all'accensione, anche senza HA.
+- **Filtro anti-rimbalzo ingressi**: serve **solo** se usi gli ingressi come contatori
+  di impulsi. I contatti meccanici "rimbalzano" e rischiano di contare due volte; il
+  filtro (1/10/100/500 ms) ignora i rimbalzi. Lascia **Off** se non usi contatori.
+- **Reset allarmi**: pulsante. Azzera l'allarme del watchdog una volta capito perché è
+  scattato.
+
+##### 📊 Diagnostica — sola lettura, per controllare la salute del modulo
+- **Accensioni**: quante volte il modulo ha preso corrente (nella tua foto: `240`).
+- **Scatti watchdog**: quante volte è scattato il watchdog (`0` = mai, ottimo). Se
+  cresce, il bridge perde contatto col modulo troppo spesso → controlla cavo/bus RS-485.
+- **Stato modulo**: stato interno — `Start` / `Richiesta comando` / `Watchdog scattato`.
+- **Watchdog scattato**: `OK` finché tutto va bene; segnala se l'allarme è memorizzato.
+
+> **In breve, per una piscina normale**: lascia **Watchdog = 0** e **Filtro = Off**, e
+> usa solo i due interruttori dei relè nel riquadro *Controlli*. Tutto il resto è per chi
+> vuole comportamenti di failsafe particolari.
+
+---
+
+**Watchdog Modbus (dettaglio tecnico)**: `HR 0x10` Watchdog_time (sec, 0=off), `HR 0x11`
+Watchdog_config (byte alto: `0` = stato Watchdog → relè a `HR 0x14`; `≠0` = stato Start →
+relè a `HR 0x15`), `HR 0x14` wdt_relay_state, `HR 0x15` start_relay_state. Tutti esposti
+in HA come entità *config*. Il bridge **non forza più** `HR 0x10 = 0` all'avvio (ora lo
+controlli tu da HA); l'unica scrittura di avvio è `HR 0x20 = 0` (reset allarmi latched dal
+boot precedente).
+
+**Registri config/diagnostica esposti** (3 blocchi Modbus *Optional* aggiuntivi per giro):
+`HR 0x10-0x12`, `HR 0x14-0x15`, `HR 0x30` (power_counter) / `0x31` (WDT_counter), + `IR 0x00`
+byte alto (stato macchina). Se un firmware non li implementasse, il device NON va offline
+(blocco saltato).
+
+**Configurazione utente** (nel form/file dell'add-on): solo `name` + `unit_id` + 8 slot
+(`relay_1..4`, `input_1..4`) con `enabled`, `name`, `type`. **Nessun** indirizzo Modbus,
+device_class inglese o `mdi:*`. I parametri di watchdog/filtro/failsafe **non** stanno nel
+form di setup: si regolano a runtime dalle entità HA descritte sopra.
 
 ---
 
