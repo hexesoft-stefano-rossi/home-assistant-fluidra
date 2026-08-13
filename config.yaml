@@ -1,6 +1,6 @@
 name: "Hexesoft Fluidra"
 description: "Bridge Fluidra/AstralPool (Modbus TCP) in Home Assistant"
-version: "1.1.6"
+version: "1.1.7"
 slug: "hexesoft_fluidra"
 arch:
   - aarch64
@@ -194,26 +194,13 @@ schema:
         unit_id: int(1,247)
         enabled: bool?
 
-  generics:
+  # Pompe di filtrazione a velocità variabile Victoria Plus Silent VS (mfr 0/1, prod 1/2011=1CV,
+  # 1/2012=2CV). Modello riconosciuto automaticamente; nessun parametro tecnico da conoscere.
+  # enable_debug_probe attiva la sonda esplorativa (dump dei registri sconosciuti nel log a DEBUG)
+  # per il reverse engineering degli indirizzi hex — spegnere quando il driver è completo.
+  filtration_pumps:
     devices:
       - name: str
         unit_id: int(1,247)
         enabled: bool?
-        model: str?
-        prefix: str
-        mappings:
-          - name: str
-            area: list(holding|input|coil|discrete)
-            address: int(0,65535)
-            kind: list(sensor|binary_sensor|switch|number|select|light)
-            scale: float?
-            signed: bool?
-            unit: str?
-            device_class: str?
-            icon: str?
-            bit: int(-1,15)?
-            writable: bool?
-            min: float?
-            max: float?
-            step: float?
-            diagnostic: bool?
+        enable_debug_probe: bool?
