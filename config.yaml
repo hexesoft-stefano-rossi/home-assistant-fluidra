@@ -1,6 +1,6 @@
 name: "Hexesoft Fluidra"
 description: "Bridge Fluidra/AstralPool (Modbus TCP) in Home Assistant"
-version: "1.1.7"
+version: "1.2.0"
 slug: "hexesoft_fluidra"
 arch:
   - aarch64
@@ -11,9 +11,9 @@ boot: auto
 
 options:
   modbus:
-    host: "192.168.10.42"   # IP del gateway Waveshare (dalla sua pagina web)
+    host: "192.168.1.100"   # IP del gateway Modbus TCP (es. Waveshare RS485-to-Ethernet)
     port: 502
-    timeout_ms: 2000        # 2s: uno slave lento/assente non blocca il bus 8s a ogni intoppo (retry già presente)
+    timeout_ms: 2000        # 2s: uno slave lento/assente non blocca il bus 8s a ogni intoppo
     trace_hex_dump: false
 
   mqtt:
@@ -33,53 +33,43 @@ options:
   system_settings:
     log_level: "info"
 
-  # Ogni categoria è wrappata in `.devices` per rendere il form di HA più
-  # leggibile: la sezione ha il titolo della categoria e la lista dei device
-  # dentro (stesso stile del bridge BTicino).
+  # ============================================================================
+  # INVENTARIO DISPOSITIVI
   #
-  # ATTIVA/DISATTIVA UN DISPOSITIVO: ogni device ha il flag `enabled` (true/false).
-  # Con enabled: false il bridge lo ignora COMPLETAMENTE — niente scan, niente
-  # polling, niente scritture di avvio; al riavvio le sue entità in Home Assistant
-  # spariscono (pulizia fantasmi). Rimettendolo a true riappare tutto. È il modo
-  # per spegnere un dispositivo SENZA cancellarne la riga di configurazione.
+  # Ogni categoria (heat_pumps, valves, gpios, lights, chlorinators,
+  # filtration_pumps) è wrappata in `.devices: []` per rendere il form di HA
+  # leggibile: la sezione mostra il titolo della categoria con la lista dei
+  # device dentro.
   #
-  # Impianto reale (agg. 2026-08-08): centralina chimica NUOVA su unit 1 (Tecno LC2).
+  # PRIMO AVVIO — le liste sono VUOTE di proposito: il bridge parte senza
+  # comunicare con nulla. Per configurare l'impianto:
+  #   1. Vai nella configurazione dell'add-on
+  #   2. Per ogni categoria pertinente, clicca "Aggiungi" e compila:
+  #        - name: nome libero mostrato in HA (es. "Pompa di Calore")
+  #        - unit_id: indirizzo Modbus del dispositivo sul bus (1..247)
+  #        - enabled: true per attivarlo
+  #   3. Salva e riavvia l'add-on
+  #
+  # SCOPRIRE GLI UNIT_ID — se non conosci gli indirizzi Modbus dei tuoi
+  # dispositivi, avvia il bridge senza device configurati e usa il pulsante
+  # "Scansione Modbus" pubblicato in HA: scansiona l'intervallo scan_from..scan_to
+  # e stampa nel log i dispositivi trovati con la loro identità (mfr/prod).
+  #
+  # DISABILITARE UN DISPOSITIVO SENZA CANCELLARLO — imposta enabled: false.
+  # Il bridge lo ignora completamente (niente scan / polling / scritture / entità)
+  # e in HA le sue entità spariscono. Rimettendolo a true riappare tutto.
+  # ============================================================================
   heat_pumps:
-    devices:
-      - name: "10 Pompa di Calore"
-        unit_id: 9
-        enabled: true
-        enable_debug_probe: false   # DIAGNOSTICA: true = legge ~60 registri extra/log DEBUG
+    devices: []
   valves:
-    devices:
-      - name: "10 Valvola Selettrice"
-        unit_id: 11
-        enabled: true
-        allow_drain: false          # ATTENZIONE: true abilita lo SCARICO (svuota la piscina)
-        enable_debug_probe: false
+    devices: []
   gpios:
-    devices:
-      - name: "10 GPIO Piscina"
-        unit_id: 26
-        enabled: true
-        relay_1_enabled: true
-        relay_1_name: "10 Motore 1"
-        relay_1_type: "Pompa"
-        relay_2_enabled: true
-        relay_2_name: "10 Motore 2"
-        relay_2_type: "Pompa"
-        # relay_3/relay_4 e input_1..4 non cablati → lasciati vuoti
+    devices: []
   lights:
-    devices:
-      - name: "10 Luci Piscina"
-        unit_id: 48
-        enabled: true
+    devices: []
   chlorinators:
-    devices:
-      - name: "10 Centralina pH/Cloro"
-        unit_id: 1              # indirizzo Modbus di fabbrica della Tecno LC2 (era 2 il vecchio modello)
-        enabled: true
-  generics:
+    devices: []
+  filtration_pumps:
     devices: []
 
 schema:
